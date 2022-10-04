@@ -2901,6 +2901,8 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
         }
     }
 
+    m_hitMask |= hitMask;
+
     if (m_caster)
     {
         if (missInfo != SPELL_MISS_EVADE && !m_caster->IsFriendlyTo(effectUnit) && (!m_spellInfo->IsPositive() || m_spellInfo->HasEffect(SPELL_EFFECT_DISPEL)))
@@ -4257,13 +4259,7 @@ void Spell::_handle_finish_phase()
             }
         }
 
-        uint32 hitMask = m_hitMask;
-        if (!(hitMask & PROC_HIT_CRITICAL))
-        {
-            hitMask |= PROC_HIT_NORMAL;
-        }
-
-        m_originalCaster->ProcSkillsAndAuras(m_originalCaster, procAttacker, PROC_FLAG_NONE, PROC_SPELL_TYPE_MASK_ALL, PROC_SPELL_PHASE_FINISH, hitMask, this, nullptr, nullptr);
+        m_originalCaster->ProcSkillsAndAuras(m_originalCaster, procAttacker, PROC_FLAG_NONE, PROC_SPELL_TYPE_MASK_ALL, PROC_SPELL_PHASE_FINISH, m_hitMask, this, nullptr, nullptr);
     }
 }
 
@@ -4422,9 +4418,6 @@ void Spell::finish(bool ok)
     {
         if (m_caster->GetTypeId() == TYPEID_PLAYER)
         {
-            // Xinef: Restore spell mods in case of fail cast
-            m_caster->ToPlayer()->RestoreSpellMods(this);
-
             // Xinef: Reset cooldown event in case of fail cast
             if (m_spellInfo->IsCooldownStartedOnEvent())
                 m_caster->ToPlayer()->SendCooldownEvent(m_spellInfo, 0, 0, false);
